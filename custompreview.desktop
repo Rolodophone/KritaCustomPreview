@@ -4,5 +4,5 @@ ServiceTypes=Krita/PythonPlugin
 X-KDE-Library=custompreview
 X-Python-2-Compatible=false
 X-Krita-Manual=manual.html
-Name=Krita Custom Preview
+Name=Custom Preview
 Comment=A docker for displaying a custom preview of your image.

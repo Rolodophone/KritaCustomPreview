@@ -19,42 +19,34 @@ class CustomPreview(DockWidget):
         self.setWidget(mainWidget)
 
         self.previewLabel = QLabel()
-        self.previewLabel.setText("Placeholder")
+        self.previewLabel.setText("Placeholder")  # TODO remove
 
         self.layout().addWidget(self.previewLabel)
 
-        self.thread = threading.Thread(target=self.threadFun)
-        self.thread.start()
+        # refresh every 2 seconds
+        self.startTimer(2000)
 
     def canvasChanged(self, canvas):
-        self.refresh(0)
+        self.refresh()
 
-    def threadFun(self):
-        i = 0
-        while True:
-            time.sleep(5)
-            self.refresh(i)
-            i += 1
+    def timerEvent(self, event):
+        self.refresh()
 
-    def refresh(self, i):
+    def refresh(self):
         doc = KI.activeDocument()
-        self.previewLabel.setText("Document is open")
 
         # return if no document is open
-        if doc is None or doc.isNull():
-            self.previewLabel.setText("No document open " + str(i))
+        if doc is None:
+            self.previewLabel.setText("No document open")  # TODO remove
             return
 
-        # # get current drawing
-        # previewImage = doc.projection()
-        #
-        # # scale it
-        #
-        # # draw it
-        # self.previewLabel.setPixmap(QPixmap.fromImage(previewImage))
-        # self.previewLabel.setText("Changed")
-        # self.previewLabel.show()
-        # self.previewLabel.update()
+        # get current drawing
+        previewImage = doc.projection(0, 0, doc.width(), doc.height())
+
+        # scale it
+
+        # draw it
+        self.previewLabel.setPixmap(QPixmap.fromImage(previewImage))
 
 
 KI.addDockWidgetFactory(DockWidgetFactory("customPreview", DockWidgetFactoryBase.DockRight, CustomPreview))

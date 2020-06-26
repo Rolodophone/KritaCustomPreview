@@ -1,8 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog, QMessageBox, QLabel
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog, QLabel, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QIcon, QImage, QPainter, QPixmap
-from krita import Krita, DockWidget, DockWidgetFactory, DockWidgetFactoryBase, InfoObject
-import threading
-import time
+from PyQt5.QtCore import Qt
+from krita import Krita, DockWidget, DockWidgetFactory, DockWidgetFactoryBase
 
 KI = Krita.instance()
 
@@ -15,21 +14,32 @@ class CustomPreview(DockWidget):
         self.setWindowTitle("Custom Preview")
 
         mainWidget = QWidget(self)
-        mainWidget.setLayout(QVBoxLayout())
+        layout = QVBoxLayout(mainWidget)
+
+        # preview
+        scrollArea = QScrollArea()
+        scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scrollArea.setWidgetResizable(True)
+        self.previewLabel = QLabel()
+        self.previewLabel.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        scrollArea.setWidget(self.previewLabel)
+
+        layout.addWidget(scrollArea)
+
+        mainWidget.setLayout(layout)
         self.setWidget(mainWidget)
 
-        self.previewLabel = QLabel()
-        self.previewLabel.setText("Placeholder")  # TODO remove
-
-        self.layout().addWidget(self.previewLabel)
-
-        # refresh every 2 seconds
-        self.startTimer(2000)
+        # refresh every second
+        self.startTimer(1000)
 
     def canvasChanged(self, canvas):
         self.refresh()
 
     def timerEvent(self, event):
+        self.refresh()
+
+    def resizeEvent(self, event):
         self.refresh()
 
     def refresh(self):
@@ -44,6 +54,8 @@ class CustomPreview(DockWidget):
         previewImage = doc.projection(0, 0, doc.width(), doc.height())
 
         # scale it
+        dockerDim = self.contentsRect()
+        previewImage = previewImage.scaled(dockerDim.width() - 2, dockerDim.height() - 2, Qt.KeepAspectRatio, Qt.FastTransformation)
 
         # draw it
         self.previewLabel.setPixmap(QPixmap.fromImage(previewImage))

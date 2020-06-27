@@ -87,23 +87,22 @@ class CustomPreview(DockWidget):
         previewImage = doc.projection(0, 0, doc.width(), doc.height())
 
         # scale images
-        dockerDim = self.scrollArea.contentsRect()
-        previewImage = previewImage.scaled(dockerDim.width(), dockerDim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+        dim = self.scrollArea.contentsRect()
+        previewImage = previewImage.scaled(dim.width(), dim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
         if not self.foregroundImage.isNull():
-            self.foregroundImage = self.foregroundImage.scaled(dockerDim.width(), dockerDim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+            self.foregroundImage = self.foregroundImage.scaled(dim.width(), dim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
         if not self.backgroundImage.isNull():
-            self.backgroundImage = self.backgroundImage.scaled(dockerDim.width(), dockerDim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+            self.backgroundImage = self.backgroundImage.scaled(dim.width(), dim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
 
         # merge images
-
         resultImage = QImage(previewImage.width(), previewImage.height(), QImage.Format_ARGB32_Premultiplied)
+        resultImage.fill(0)
         painter = QPainter(resultImage)
         painter.drawImage(0, 0, self.backgroundImage)
         painter.drawImage(0, 0, previewImage)
         painter.drawImage(0, 0, self.foregroundImage)
         painter.end()
 
-        # draw it
         self.previewLabel.setPixmap(QPixmap.fromImage(resultImage))
 
     def setForeground(self):
@@ -129,6 +128,5 @@ KI.addDockWidgetFactory(DockWidgetFactory("customPreview", DockWidgetFactoryBase
 
 # TODO make docker disabled when no document open
 # TODO make scrollArea tight around preview
-# TODO fix graphics bugs with transparency         IN PROGRESS
 # TODO fix drawing images of different sizes
 # TODO fix clear button

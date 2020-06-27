@@ -9,4 +9,6 @@ IT IS DESIGNED SOLELY FOR MY PC; IT MAY NOT WORK FOR YOURS
 
 cp -r ./custompreview ~/.local/share/krita/pykrita
 cp ./custompreview.desktop ~/.local/share/krita/pykrita
-killall krita && krita
+killall krita
+wait
+krita

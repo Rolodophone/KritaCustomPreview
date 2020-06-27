@@ -13,6 +13,9 @@ class CustomPreview(DockWidget):
 
         self.setWindowTitle(Krita.krita_i18n("Custom Preview"))
 
+        self.foregroundImage = QImage()
+        self.backgroundImage = QImage()
+
         mainWidget = QWidget(self)
         layout = QVBoxLayout(mainWidget)
 
@@ -22,7 +25,7 @@ class CustomPreview(DockWidget):
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setWidgetResizable(True)
         self.previewLabel = QLabel()
-        self.previewLabel.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        self.previewLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.scrollArea.setWidget(self.previewLabel)
 
         # BUTTONS
@@ -83,21 +86,49 @@ class CustomPreview(DockWidget):
         # get current drawing
         previewImage = doc.projection(0, 0, doc.width(), doc.height())
 
-        # scale it
+        # scale images
         dockerDim = self.scrollArea.contentsRect()
         previewImage = previewImage.scaled(dockerDim.width(), dockerDim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+        if not self.foregroundImage.isNull():
+            self.foregroundImage = self.foregroundImage.scaled(dockerDim.width(), dockerDim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+        if not self.backgroundImage.isNull():
+            self.backgroundImage = self.backgroundImage.scaled(dockerDim.width(), dockerDim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+
+        # merge images
+
+        resultImage = QImage(previewImage.width(), previewImage.height(), QImage.Format_ARGB32_Premultiplied)
+        painter = QPainter(resultImage)
+        painter.drawImage(0, 0, self.backgroundImage)
+        painter.drawImage(0, 0, previewImage)
+        painter.drawImage(0, 0, self.foregroundImage)
+        painter.end()
 
         # draw it
-        self.previewLabel.setPixmap(QPixmap.fromImage(previewImage))
+        self.previewLabel.setPixmap(QPixmap.fromImage(resultImage))
 
     def setForeground(self):
-        pass
+        foregroundFile = QFileDialog.getOpenFileName(self, Krita.krita_i18n("Select foreground image"), filter=Krita.krita_i18n("Images (*.png *.xpm *.jpg)"))[0]
+        self.foregroundImage.load(foregroundFile)
+        self.refresh()
+        print("Custom Preview: Foreground set to " + foregroundFile)
 
     def setBackground(self):
-        pass
+        backgroundFile = QFileDialog.getOpenFileName(self, Krita.krita_i18n("Select background image"), filter=Krita.krita_i18n("Images (*.png *.xpm *.jpg)"))[0]
+        self.backgroundImage.load(backgroundFile)
+        self.refresh()
+        print("Custom Preview: Background set to " + backgroundFile)
 
     def removeForegroundAndBackground(self):
-        pass
+        self.foregroundImage = QImage()
+        self.backgroundImage = QImage()
+        self.refresh()
+        print("Custom Preview: Foreground and background reset")
 
 
 KI.addDockWidgetFactory(DockWidgetFactory("customPreview", DockWidgetFactoryBase.DockRight, CustomPreview))
+
+# TODO make docker disabled when no document open
+# TODO make scrollArea tight around preview
+# TODO fix graphics bugs with transparency         IN PROGRESS
+# TODO fix drawing images of different sizes
+# TODO fix clear button

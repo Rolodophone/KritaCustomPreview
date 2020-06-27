@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSizePolicy, QScrollArea, QLayout, QAction, QToolButton
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSizePolicy, QScrollArea, QLayout, QAction, QToolButton, QFrame, QStyle
 from PyQt5.QtGui import QIcon, QImage, QPainter, QPixmap
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize, QMargins
 from krita import Krita, DockWidget, DockWidgetFactory, DockWidgetFactoryBase
 
 KI = Krita.instance()
@@ -16,22 +16,33 @@ class CustomPreview(DockWidget):
         self.foregroundImage = QImage()
         self.backgroundImage = QImage()
 
-        mainWidget = QWidget(self)
-        layout = QVBoxLayout(mainWidget)
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
 
-        # preview
+        # PREVIEW
+
+        self.previewContainer = QWidget()
+        layout.addWidget(self.previewContainer)
+        self.previewContainer.setContentsMargins(0, 0, 0, 0)
+        previewContainerLayout = QHBoxLayout()
+        previewContainerLayout.setContentsMargins(0, 0, 0, 0)
+        previewContainerLayout.setSpacing(0)
+        self.previewContainer.setLayout(previewContainerLayout)
         self.scrollArea = QScrollArea()
+        previewContainerLayout.addWidget(self.scrollArea)
         self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         self.previewLabel = QLabel()
-        self.previewLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.scrollArea.setWidget(self.previewLabel)
 
         # BUTTONS
 
-        buttonLayout = QHBoxLayout()
-        buttonLayout.setAlignment(Qt.AlignLeft)
+        self.buttonLayout = QHBoxLayout()
+        layout.addLayout(self.buttonLayout)
+        self.buttonLayout.setAlignment(Qt.AlignLeft)
 
         setForegroundAtn = QAction(self)
         setForegroundAtn.setIconText("Set foreground")
@@ -39,7 +50,7 @@ class CustomPreview(DockWidget):
         setForegroundAtn.triggered.connect(self.setForeground)
         setForegroundBtn = QToolButton()
         setForegroundBtn.setDefaultAction(setForegroundAtn)
-        buttonLayout.addWidget(setForegroundBtn)
+        self.buttonLayout.addWidget(setForegroundBtn)
 
         setBackgroundAtn = QAction(self)
         setBackgroundAtn.setIconText(Krita.krita_i18n("Set background"))
@@ -47,7 +58,7 @@ class CustomPreview(DockWidget):
         setBackgroundAtn.triggered.connect(self.setBackground)
         setBackgroundBtn = QToolButton()
         setBackgroundBtn.setDefaultAction(setBackgroundAtn)
-        buttonLayout.addWidget(setBackgroundBtn)
+        self.buttonLayout.addWidget(setBackgroundBtn)
 
         removeAtn = QAction(self)
         removeAtn.setIconText(Krita.krita_i18n("Remove foreground and background"))
@@ -55,17 +66,13 @@ class CustomPreview(DockWidget):
         removeAtn.triggered.connect(self.removeForegroundAndBackground)
         removeBtn = QToolButton()
         removeBtn.setDefaultAction(removeAtn)
-        buttonLayout.addWidget(removeBtn)
+        self.buttonLayout.addWidget(removeBtn)
 
-        # adding widgets to layout
-        layout.addWidget(self.scrollArea)
-        layout.addLayout(buttonLayout)
-
+        mainWidget = QWidget(self)
         mainWidget.setLayout(layout)
         self.setWidget(mainWidget)
 
-        # refresh every second
-        self.startTimer(1000)
+        self.startTimer(500)  # refresh twice a second
 
     def canvasChanged(self, canvas):
         self.refresh()
@@ -87,23 +94,30 @@ class CustomPreview(DockWidget):
         previewImage = doc.projection(0, 0, doc.width(), doc.height())
 
         # scale images
-        dim = self.scrollArea.contentsRect()
-        previewImage = previewImage.scaled(dim.width(), dim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+        dim = self.previewContainer.contentsRect()
+        width = dim.width() - self.scrollArea.contentsMargins().top() * 2
+        height = dim.height() - self.scrollArea.contentsMargins().top() * 2
+        previewImage = previewImage.scaled(width, height, Qt.KeepAspectRatio, Qt.FastTransformation)
+        fgImage = QImage()
         if not self.foregroundImage.isNull():
-            self.foregroundImage = self.foregroundImage.scaled(dim.width(), dim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+            fgImage = self.foregroundImage.scaled(width, height, Qt.KeepAspectRatio, Qt.FastTransformation)
+        bgImage = QImage()
         if not self.backgroundImage.isNull():
-            self.backgroundImage = self.backgroundImage.scaled(dim.width(), dim.height(), Qt.KeepAspectRatio, Qt.FastTransformation)
+            bgImage = self.backgroundImage.scaled(width, height, Qt.KeepAspectRatioByExpanding, Qt.FastTransformation)
 
         # merge images
         resultImage = QImage(previewImage.width(), previewImage.height(), QImage.Format_ARGB32_Premultiplied)
         resultImage.fill(0)
         painter = QPainter(resultImage)
-        painter.drawImage(0, 0, self.backgroundImage)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.drawImage(0, 0, bgImage)
         painter.drawImage(0, 0, previewImage)
-        painter.drawImage(0, 0, self.foregroundImage)
+        painter.drawImage(0, 0, fgImage)
         painter.end()
 
         self.previewLabel.setPixmap(QPixmap.fromImage(resultImage))
+
+        self.scrollArea.setMaximumSize(previewImage.width() + 4, previewImage.height() + 4)
 
     def setForeground(self):
         foregroundFile = QFileDialog.getOpenFileName(self, Krita.krita_i18n("Select foreground image"), filter=Krita.krita_i18n("Images (*.png *.xpm *.jpg)"))[0]
@@ -130,3 +144,7 @@ KI.addDockWidgetFactory(DockWidgetFactory("customPreview", DockWidgetFactoryBase
 # TODO make scrollArea tight around preview
 # TODO fix drawing images of different sizes
 # TODO fix clear button
+
+
+def printSize(size: QSize):
+    print(str(size.width()) + ", " + str(size.height()))

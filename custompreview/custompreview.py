@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFil
 from PyQt5.QtGui import QIcon, QImage, QPainter, QPixmap
 from PyQt5.QtCore import Qt, QSize, QMargins
 from krita import Krita, DockWidget, DockWidgetFactory, DockWidgetFactoryBase
+import re
 
 KI = Krita.instance()
 
@@ -77,6 +78,18 @@ class CustomPreview(DockWidget):
     def canvasChanged(self, canvas):
         self.refresh()
 
+        # load fg and bg saved in .kra file
+        if KI.activeDocument() is not None:
+            docInfo = KI.activeDocument().documentInfo()
+
+            fgTags = re.findall(r"(?<=custom-preview-fg=)[^,]*", docInfo)
+            if len(fgTags) == 1:
+                self.foregroundImage.load(fgTags[0])
+
+            bgTags = re.findall(r"(?<=custom-preview-bg=)[^,]*", docInfo)
+            if len(bgTags) == 1:
+                self.backgroundImage.load(bgTags[0])
+
     def timerEvent(self, event):
         self.refresh()
 
@@ -129,7 +142,7 @@ class CustomPreview(DockWidget):
         foregroundFile = QFileDialog.getOpenFileName(self, Krita.krita_i18n("Select foreground image"), filter=Krita.krita_i18n("Images (*.png *.xpm *.jpg)"))[0]
         self.foregroundImage.load(foregroundFile)
 
-        docInfo = KI.activeDocument().documentInfo()
+        writeTag("custom-preview-fg", foregroundFile)
 
         self.refresh()
         print("Custom Preview: Foreground set to " + foregroundFile)
@@ -137,6 +150,9 @@ class CustomPreview(DockWidget):
     def setBackground(self):
         backgroundFile = QFileDialog.getOpenFileName(self, Krita.krita_i18n("Select background image"), filter=Krita.krita_i18n("Images (*.png *.xpm *.jpg)"))[0]
         self.backgroundImage.load(backgroundFile)
+
+        writeTag("custom-preview-bg", backgroundFile)
+
         self.refresh()
         print("Custom Preview: Background set to " + backgroundFile)
 
@@ -144,13 +160,27 @@ class CustomPreview(DockWidget):
         self.foregroundImage = QImage()
         self.backgroundImage = QImage()
         self.refresh()
+
+        writeTag("custom-preview-fg", "")
+        writeTag("custom-preview-bg", "")
+
         print("Custom Preview: Foreground and background reset")
 
 
+def writeTag(key, value):
+    docInfo = KI.activeDocument().documentInfo()
+
+    if key in docInfo:
+        newDocInfo = re.sub(r"(?<=" + key + r"=)[^,]*", value, docInfo)
+    else:
+        pattern = "<abstract><![CDATA["
+        index = docInfo.find(pattern) + len(pattern)
+        newDocInfo = docInfo[:index] + key + "=" + value + "," + docInfo[index:]
+
+    KI.activeDocument().setDocumentInfo(newDocInfo)
+
+    print("Custom Preview: Modified '"+key+"'tag. New documentInfo:")
+    print(KI.activeDocument().documentInfo())
+
+
 KI.addDockWidgetFactory(DockWidgetFactory("customPreview", DockWidgetFactoryBase.DockRight, CustomPreview))
-
-# TODO make scale info save in .kra file
-
-
-def printSize(size: QSize):
-    print(str(size.width()) + ", " + str(size.height()))

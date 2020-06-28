@@ -88,7 +88,13 @@ class CustomPreview(DockWidget):
 
         # return if no document is open
         if doc is None:
+            self.setDisabled(True)
+            self.foregroundImage = QImage()
+            self.backgroundImage = QImage()
+            self.previewLabel.setPixmap(QPixmap())
             return
+
+        self.setDisabled(False)
 
         # get current drawing
         previewImage = doc.projection(0, 0, doc.width(), doc.height())
@@ -122,6 +128,9 @@ class CustomPreview(DockWidget):
     def setForeground(self):
         foregroundFile = QFileDialog.getOpenFileName(self, Krita.krita_i18n("Select foreground image"), filter=Krita.krita_i18n("Images (*.png *.xpm *.jpg)"))[0]
         self.foregroundImage.load(foregroundFile)
+
+        docInfo = KI.activeDocument().documentInfo()
+
         self.refresh()
         print("Custom Preview: Foreground set to " + foregroundFile)
 
@@ -140,10 +149,7 @@ class CustomPreview(DockWidget):
 
 KI.addDockWidgetFactory(DockWidgetFactory("customPreview", DockWidgetFactoryBase.DockRight, CustomPreview))
 
-# TODO make docker disabled when no document open
-# TODO make scrollArea tight around preview
-# TODO fix drawing images of different sizes
-# TODO fix clear button
+# TODO make scale info save in .kra file
 
 
 def printSize(size: QSize):

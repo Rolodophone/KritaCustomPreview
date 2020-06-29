@@ -5,6 +5,19 @@
     <title>Title</title>
 </head>
 <body>
-hi
+    <h1 id="krita-custom-preview">Krita Custom Preview</h1>
+    <p>A docker for displaying a custom preview of your image.</p>
+    <p><img src="https://raw.githubusercontent.com/Rolodophone/KritaCustomPreview/master/screenshots/docker.png" alt="Docker"></p>
+    <p>This plugin adds a docker which displays a smaller version of the image you have open. This can be used to get a sense of how your drawing looks overall while you are zoomed in.
+        The preview resizes dynamically, so you can choose how large or small you want it. In addition, it uses nearest-neighbor scaling, so it&#39;s perfect for pixel art.</p>
+    <p>The docker includes two buttons for setting foreground and background images, which are displayed in front of and behind the preview. You could use the foreground image for
+        seeing how your drawing looks like as a round icon. The path to these foreground and background images is saved in the .kra file.</p>
+    <p>I&#39;ve included a few basic foreground and background images that people might find useful, but of course you can make your own as well! If you think other people would find
+        your own foreground or background image useful, feel free to upload them to GitHub and submit a pull request.</p>
+    <h2 id="how-to-install">How to install</h2>
+    <p>Copy the <em>custompreview</em> folder and <em>custompreview.desktop</em> to your <em>pykrita</em> folder. You can find the <em>pykrita</em> folder by opening Krita and going to
+        <em>Settings</em> &gt; <em>Manage resources...</em> &gt; <em>open resource folder</em>. Then restart Krita and enable the plugin in <em>Settings</em> &gt; <em>Configure
+            Krita</em> &gt; <em>Python Plugin Manager</em>.</p>
+
 </body>
 </html>

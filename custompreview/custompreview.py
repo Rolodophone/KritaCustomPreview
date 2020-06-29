@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSizePolicy, QScrollArea, QLayout, QAction, QToolButton, QFrame, QStyle
-from PyQt5.QtGui import QIcon, QImage, QPainter, QPixmap
-from PyQt5.QtCore import Qt, QSize, QMargins
-from krita import Krita, DockWidget, DockWidgetFactory, DockWidgetFactoryBase
 import re
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QImage, QPainter, QPixmap
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSizePolicy, QScrollArea, QAction, QToolButton
+from krita import Krita, DockWidget, DockWidgetFactory, DockWidgetFactoryBase
 
 KI = Krita.instance()
 

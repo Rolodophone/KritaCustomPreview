@@ -2,7 +2,7 @@ import re
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPainter, QPixmap
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSizePolicy, QScrollArea, QAction, QToolButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSizePolicy, QScrollArea, QAction, QToolButton, QComboBox
 from krita import Krita, DockWidget, DockWidgetFactory, DockWidgetFactoryBase
 
 KI = Krita.instance()
@@ -70,6 +70,18 @@ class CustomPreview(DockWidget):
         removeBtn.setDefaultAction(removeAtn)
         self.buttonLayout.addWidget(removeBtn)
 
+        self.zoomComboBox = QComboBox(self)
+        self.zoomComboBox.addItem("Auto fit", lambda w, h: (
+                self.previewContainer.contentsRect().width() - self.scrollArea.contentsMargins().top() * 2,
+                self.previewContainer.contentsRect().height() - self.scrollArea.contentsMargins().top() * 2
+            ))
+        self.zoomComboBox.addItem("50%", lambda w, h, zoom=0.5: (w * zoom, h * zoom))
+        self.zoomComboBox.addItem("100%", lambda w, h: (w, h))
+        self.zoomComboBox.addItem("200%", lambda w, h, zoom=2: (w * zoom, h * zoom))
+        self.zoomComboBox.addItem("400%", lambda w, h, zoom=4: (w * zoom, h * zoom))
+        self.zoomComboBox.setCurrentIndex(2)
+        self.buttonLayout.addWidget(self.zoomComboBox)
+
         mainWidget = QWidget(self)
         mainWidget.setLayout(layout)
         self.setWidget(mainWidget)
@@ -114,9 +126,7 @@ class CustomPreview(DockWidget):
         previewImage = doc.projection(0, 0, doc.width(), doc.height())
 
         # scale images
-        dim = self.previewContainer.contentsRect()
-        width = dim.width() - self.scrollArea.contentsMargins().top() * 2
-        height = dim.height() - self.scrollArea.contentsMargins().top() * 2
+        width, height = self.zoomComboBox.currentData()(doc.width(), doc.height())
         previewImage = previewImage.scaled(width, height, Qt.KeepAspectRatio, Qt.FastTransformation)
         fgImage = QImage()
         if not self.foregroundImage.isNull():

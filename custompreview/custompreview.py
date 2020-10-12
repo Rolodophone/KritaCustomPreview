@@ -75,11 +75,8 @@ class CustomPreview(DockWidget):
                 self.previewContainer.contentsRect().width() - self.scrollArea.contentsMargins().top() * 2,
                 self.previewContainer.contentsRect().height() - self.scrollArea.contentsMargins().top() * 2
             ))
-        self.zoomComboBox.addItem("50%", lambda w, h, zoom=0.5: (w * zoom, h * zoom))
-        self.zoomComboBox.addItem("100%", lambda w, h: (w, h))
-        self.zoomComboBox.addItem("200%", lambda w, h, zoom=2: (w * zoom, h * zoom))
-        self.zoomComboBox.addItem("400%", lambda w, h, zoom=4: (w * zoom, h * zoom))
-        self.zoomComboBox.setCurrentIndex(2)
+        for scale in [0.5, 1, 2, 4]:
+            self.zoomComboBox.addItem("{:d}%".format(int(100 * scale)), lambda w, h, scale=scale: (w * scale, h * scale))
         self.buttonLayout.addWidget(self.zoomComboBox)
 
         mainWidget = QWidget(self)
